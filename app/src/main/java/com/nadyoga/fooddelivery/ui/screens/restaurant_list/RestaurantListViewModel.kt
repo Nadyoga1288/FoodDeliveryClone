@@ -1,3 +1,4 @@
+
 package com.nadyoga.fooddelivery.viewmodel
 import com.nadyoga.fooddelivery.data.api.model.RestaurantType
 import androidx.lifecycle.ViewModel

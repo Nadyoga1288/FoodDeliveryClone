@@ -1,10 +1,7 @@
 package com.nadyoga.fooddelivery.data.api.model
 
-enum class RestaurantType {
-    PIZZA,
-    SUSHI,
-    BURGER
-}
+//enum class RestaurantType {
+
 
 data class Restaurant(
     val id: Int,
