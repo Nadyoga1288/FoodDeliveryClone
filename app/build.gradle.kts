@@ -2,20 +2,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")   // <-- You still need this for Room annotations
 }
-
 
 android {
     namespace = "com.nadyoga.fooddelivery"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 35
+    buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId = "com.nadyoga.fooddelivery"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -59,41 +56,31 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-}
-dependencies {
 
-    // Compose
-    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-
+    implementation(libs.androidx.compose.foundation)
+    
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
-    // Retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    kapt()
-    implementation("androidx.room:room-ktx:2.6.1")
-    dependencies {
-        // ... другие зависимости
+    // Image Loading
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
-        // Lifecycle & ViewModel for Compose
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3") // или новее
-        implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3") // или новее
-    }
+    // Testing
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
+    // Lifecycle & ViewModel for Compose (Duplicates removed/merged where appropriate)
+    // implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3") // Already in libs or above
+    // implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3") // Already above
 }
-
-private fun DependencyHandlerScope.kapt() {}

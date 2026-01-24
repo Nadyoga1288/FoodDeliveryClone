@@ -7,80 +7,107 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.nadyoga.fooddelivery.data.api.getMenuFor
+import com.nadyoga.fooddelivery.data.api.MenuData
 import com.nadyoga.fooddelivery.data.api.model.RestaurantType
+import com.nadyoga.fooddelivery.ui.CartViewModel
+import com.nadyoga.fooddelivery.ui.components.MenuItemCard
+import java.util.Locale
 
 @Composable
 fun MenuScreen(
     selectedType: RestaurantType,
-    onBackClick: () -> Unit
+    cartViewModel: CartViewModel,
+    onBackClick: () -> Unit,
+    onViewCartClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),  // трохи більше відступів для краси
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center  // ← головне: центрує ВСІ елементи вертикально
-    ) {
-        // Заголовок (центрований)
-        Text(
-            text = "Меню для ${selectedType.javaClass.simpleName}",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
+    // Отримуємо список страв для обраного типу ресторану
+    val menuItems = MenuData.getMenuItems(selectedType)
 
-        // Кнопка "Назад" (широка, центрована)
-        Button(
-            onClick = onBackClick,
-            modifier = Modifier
-                .fillMaxWidth(0.8f)  // 80% ширини екрана — виглядає краще
-                .padding(bottom = 40.dp)
-        ) {
-            Text("Назад до ресторанів")
-        }
+    // Дані з ViewModel для нижньої панелі
+    val cartItems = cartViewModel.cartItems
+    val totalPrice = cartViewModel.getTotalPrice()
+    val totalCount = cartViewModel.getTotalCount() // Загальна кількість одиниць
 
-        // Список страв (центрований, з відступами)
-        val menuItems = getMenuFor(selectedType)
-
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(0.9f),  // трохи вужчий список для краси
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            items(menuItems) { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    Scaffold(
+        bottomBar = {
+            // Кнопка з'являється лише якщо в кошику щось є
+            if (cartItems.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shadowElevation = 8.dp,
+                    color = MaterialTheme.colorScheme.surface
                 ) {
-                    Row(
+                    Button(
+                        onClick = onViewCartClick,
                         modifier = Modifier
+                            .fillMaxWidth()
                             .padding(16.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start
+                            .height(56.dp),
+                        shape = MaterialTheme.shapes.medium
                     ) {
-                        Text(
-                            text = item.icon,
-                            fontSize = 48.sp,  // великий емодзі
-                            modifier = Modifier.padding(end = 16.dp)
-                        )
-
-                        Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Text(
-                                text = item.name,
-                                style = MaterialTheme.typography.titleMedium
+                                text = "Переглянути кошик",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
                             )
+                            // Відображаємо загальну кількість та суму
                             Text(
-                                text = item.price,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary
+                                text = "($totalCount) • ${String.format(Locale.ROOT, "%.2f", totalPrice)}€",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
                             )
                         }
                     }
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp)
+        ) {
+            // Кнопка назад
+            TextButton(
+                onClick = onBackClick,
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                Text("← Назад до ресторанів", fontSize = 16.sp)
+            }
+
+            // Заголовок меню
+            Text(
+                text = "Меню: ${selectedType.name}",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Список страв
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(menuItems) { item ->
+                    MenuItemCard(
+                        menuItem = item,
+                        onAddClick = {
+                            // Додаємо страву через ViewModel
+                            cartViewModel.addItem(item)
+                        }
+                    )
                 }
             }
         }

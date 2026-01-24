@@ -1,67 +1,114 @@
-package com.nadyoga.fooddelivery.ui.screens.restaurant_list
+package com.nadyoga.fooddelivery.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.nadyoga.fooddelivery.data.api.model.Restaurant
 import com.nadyoga.fooddelivery.data.api.model.RestaurantType
 import com.nadyoga.fooddelivery.ui.components.RestaurantCard
-import com.nadyoga.fooddelivery.ui.screens.menu.MenuScreen
-import com.nadyoga.fooddelivery.utils.UiState
-import com.nadyoga.fooddelivery.viewmodel.RestaurantListViewModel
+import com.nadyoga.fooddelivery.ui.FavoritesViewModel
 
 @Composable
 fun RestaurantListScreen(
-    viewModel: RestaurantListViewModel = viewModel()
+    restaurants: List<Restaurant>,
+    onRestaurantClick: (Restaurant) -> Unit,
+    favoritesViewModel: FavoritesViewModel = viewModel()
 ) {
-    val state by viewModel.state.collectAsState()
-
-    var selectedRestaurantType by remember { mutableStateOf<RestaurantType?>(null) }
-
-    when (state) {
-        is UiState.Loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedFilter by remember { mutableStateOf("ALL") }
+    val favoriteRestaurants by favoritesViewModel.favoriteRestaurants.collectAsState()
+    
+    val filteredRestaurants = remember(restaurants, searchQuery, selectedFilter) {
+        val filteredBySearch = if (searchQuery.isEmpty()) {
+            restaurants
+        } else {
+            restaurants.filter { restaurant ->
+                restaurant.name.contains(searchQuery, ignoreCase = true) ||
+                restaurant.description.contains(searchQuery, ignoreCase = true)
             }
         }
-
-        is UiState.Success -> {
-            val restaurants = (state as UiState.Success<List<Restaurant>>).data
-
-            if (selectedRestaurantType == null) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    contentPadding = PaddingValues(top = 200.dp, bottom = 24.dp)
-                ) {
-                    items(restaurants) { restaurant ->
-                        RestaurantCard(
-                            restaurant = restaurant,
-                            onClick = { selectedRestaurantType = restaurant.type }
-                        )
-                    }
-                }
-            } else {
-                MenuScreen(
-                    selectedType = selectedRestaurantType!!,
-                    onBackClick = { selectedRestaurantType = null },
+        
+        if (selectedFilter == "ALL") {
+            filteredBySearch
+        } else {
+            filteredBySearch.filter { restaurant ->
+                restaurant.type.name == selectedFilter
+            }
+        }
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            placeholder = { Text("Search restaurants...") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search"
                 )
-            }
+            },
+            singleLine = true
+        )
+        
+        // Filter Chips
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                onClick = { selectedFilter = "ALL" },
+                selected = selectedFilter == "ALL",
+                label = { Text("All") }
+            )
+            FilterChip(
+                onClick = { selectedFilter = "PIZZA" },
+                selected = selectedFilter == "PIZZA",
+                label = { Text("🍕 Pizza") }
+            )
+            FilterChip(
+                onClick = { selectedFilter = "SUSHI" },
+                selected = selectedFilter == "SUSHI",
+                label = { Text("🍣 Sushi") }
+            )
+            FilterChip(
+                onClick = { selectedFilter = "BURGER" },
+                selected = selectedFilter == "BURGER",
+                label = { Text("🍔 Burger") }
+            )
         }
-
-        is UiState.Error -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = (state as UiState.Error).message,
-                    color = MaterialTheme.colorScheme.error
+        
+        // Restaurant List
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            items(filteredRestaurants) { restaurant ->
+                RestaurantCard(
+                    restaurant = restaurant,
+                    onClick = { onRestaurantClick(restaurant) },
+                    isFavorite = favoriteRestaurants.contains(restaurant.id),
+                    onFavoriteClick = { favoritesViewModel.toggleFavorite(restaurant.id) }
                 )
             }
         }
