@@ -12,16 +12,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.nadyoga.fooddelivery.data.api.model.Restaurant
 import com.nadyoga.fooddelivery.data.api.model.RestaurantType
+import com.nadyoga.fooddelivery.ui.components.MainScaffold
 import com.nadyoga.fooddelivery.ui.components.RestaurantCard
 import com.nadyoga.fooddelivery.ui.FavoritesViewModel
+import com.nadyoga.fooddelivery.ui.screens.auth.AuthViewModel
 
 @Composable
 fun RestaurantListScreen(
     restaurants: List<Restaurant>,
     onRestaurantClick: (Restaurant) -> Unit,
-    favoritesViewModel: FavoritesViewModel = viewModel()
+    navController: NavController,
+    favoritesViewModel: FavoritesViewModel = viewModel(),
+    authViewModel: com.nadyoga.fooddelivery.ui.screens.auth.AuthViewModel
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("ALL") }
@@ -46,70 +51,85 @@ fun RestaurantListScreen(
         }
     }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            placeholder = { Text("Search restaurants...") },
-            leadingIcon = {
+    MainScaffold(
+        navController = navController,
+        authViewModel = authViewModel,
+        title = "Food Delivery",
+        actions = {
+            IconButton(onClick = { /* TODO: Open search */ }) {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search"
                 )
-            },
-            singleLine = true
-        )
-        
-        // Filter Chips
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(
-                onClick = { selectedFilter = "ALL" },
-                selected = selectedFilter == "ALL",
-                label = { Text("All") }
-            )
-            FilterChip(
-                onClick = { selectedFilter = "PIZZA" },
-                selected = selectedFilter == "PIZZA",
-                label = { Text("🍕 Pizza") }
-            )
-            FilterChip(
-                onClick = { selectedFilter = "SUSHI" },
-                selected = selectedFilter == "SUSHI",
-                label = { Text("🍣 Sushi") }
-            )
-            FilterChip(
-                onClick = { selectedFilter = "BURGER" },
-                selected = selectedFilter == "BURGER",
-                label = { Text("🍔 Burger") }
-            )
+            }
         }
-        
-        // Restaurant List
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            items(filteredRestaurants) { restaurant ->
-                RestaurantCard(
-                    restaurant = restaurant,
-                    onClick = { onRestaurantClick(restaurant) },
-                    isFavorite = favoriteRestaurants.contains(restaurant.id),
-                    onFavoriteClick = { favoritesViewModel.toggleFavorite(restaurant.id) }
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                placeholder = { Text("Search restaurants...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                singleLine = true
+            )
+            
+            // Filter Chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    onClick = { selectedFilter = "ALL" },
+                    selected = selectedFilter == "ALL",
+                    label = { Text("All") }
                 )
+                FilterChip(
+                    onClick = { selectedFilter = "PIZZA" },
+                    selected = selectedFilter == "PIZZA",
+                    label = { Text("🍕 Pizza") }
+                )
+                FilterChip(
+                    onClick = { selectedFilter = "SUSHI" },
+                    selected = selectedFilter == "SUSHI",
+                    label = { Text("🍣 Sushi") }
+                )
+                FilterChip(
+                    onClick = { selectedFilter = "BURGER" },
+                    selected = selectedFilter == "BURGER",
+                    label = { Text("🍔 Burger") }
+                )
+            }
+            
+            // Restaurant List
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                items(filteredRestaurants) { restaurant ->
+                    RestaurantCard(
+                        restaurant = restaurant,
+                        onClick = { onRestaurantClick(restaurant) },
+                        isFavorite = favoriteRestaurants.contains(restaurant.id),
+                        onFavoriteClick = { favoritesViewModel.toggleFavorite(restaurant.id) }
+                    )
+                }
             }
         }
     }

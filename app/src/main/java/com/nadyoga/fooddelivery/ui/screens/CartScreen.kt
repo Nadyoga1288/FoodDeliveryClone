@@ -19,7 +19,8 @@ import java.util.Locale
 @Composable
 fun CartScreen(
     cartViewModel: CartViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onCheckout: () -> Unit
 ) {
     val cartItems = cartViewModel.cartItems
     val totalPrice = cartViewModel.getTotalPrice()
@@ -39,7 +40,7 @@ fun CartScreen(
         bottomBar = {
             if (cartItems.isNotEmpty()) {
                 Button(
-                    onClick = { /* Оплата */ },
+                    onClick = onCheckout,
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp)
                 ) {
                     Text("Замовити • ${String.format(Locale.ROOT, "%.2f", totalPrice)}€")
