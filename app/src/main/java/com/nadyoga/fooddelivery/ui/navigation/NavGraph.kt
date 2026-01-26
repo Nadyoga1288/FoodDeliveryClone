@@ -13,8 +13,14 @@ import com.nadyoga.fooddelivery.data.repository.FoodRepository
 import com.nadyoga.fooddelivery.ui.CartViewModel
 import com.nadyoga.fooddelivery.ui.FavoritesViewModel
 import com.nadyoga.fooddelivery.ui.screens.RestaurantListScreen
+import com.nadyoga.fooddelivery.ui.screens.auth.AuthViewModel
+import com.nadyoga.fooddelivery.ui.screens.auth.LoginScreen
+import com.nadyoga.fooddelivery.ui.screens.auth.RegisterScreen
 import com.nadyoga.fooddelivery.ui.screens.cart.CartScreen
+import com.nadyoga.fooddelivery.ui.screens.checkout.CheckoutScreen
 import com.nadyoga.fooddelivery.ui.screens.menu.MenuScreen
+import com.nadyoga.fooddelivery.ui.screens.orders.OrderHistoryScreen
+import com.nadyoga.fooddelivery.ui.screens.profile.ProfileScreen
 
 @Composable
 fun NavGraph(
@@ -25,17 +31,49 @@ fun NavGraph(
     val restaurants by produceState<List<Restaurant>>(initialValue = emptyList()) {
         foodRepository.getRestaurants().collect { value = it }
     }
+    val authViewModel: AuthViewModel = viewModel()
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
 
     NavHost(
         navController = navController,
-        startDestination = "restaurant_list"
+        startDestination = if (isAuthenticated) "restaurant_list" else "login"
     ) {
+        // Authentication Screens
+        composable("login") {
+            LoginScreen(
+                onLoginSuccess = { 
+                    navController.navigate("restaurant_list") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToRegister = {
+                    navController.navigate("register")
+                }
+            )
+        }
+        
+        composable("register") {
+            RegisterScreen(
+                onRegisterSuccess = { 
+                    navController.navigate("restaurant_list") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // Main App Screens
         composable("restaurant_list") {
             RestaurantListScreen(
                 restaurants = restaurants,
                 onRestaurantClick = { restaurant ->
                     navController.navigate("menu/${restaurant.type.name}")
-                }
+                },
+                navController = navController,
+                authViewModel = authViewModel
             )
         }
 
@@ -43,21 +81,56 @@ fun NavGraph(
             route = "menu/{restaurantType}",
             arguments = listOf(navArgument("restaurantType") { type = NavType.StringType })
         ) { backStackEntry ->
-            val typeName = backStackEntry.arguments?.getString("restaurantType") ?: "PIZZA"
-            val selectedType = RestaurantType.valueOf(typeName)
-
+            val restaurantType = backStackEntry.arguments?.getString("restaurantType")
+            val type = RestaurantType.values().find { it.name == restaurantType } ?: RestaurantType.PIZZA
+            
             MenuScreen(
-                selectedType = selectedType,
+                restaurantType = type,
                 cartViewModel = cartViewModel,
                 onBackClick = { navController.popBackStack() },
-                onViewCartClick = { navController.navigate("cart") }
+                onCartClick = { navController.navigate("cart") }
             )
         }
 
         composable("cart") {
             CartScreen(
                 cartViewModel = cartViewModel,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onCheckout = { 
+                    navController.navigate("checkout")
+                }
+            )
+        }
+        
+        composable("checkout") {
+            CheckoutScreen(
+                navController = navController,
+                authViewModel = authViewModel,
+                onCheckoutSuccess = {
+                    navController.navigate("order_history") {
+                        popUpTo("restaurant_list") { inclusive = false }
+                    }
+                }
+            )
+        }
+        
+        composable("profile") {
+            ProfileScreen(
+                authViewModel = authViewModel,
+                navController = navController,
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate("login") {
+                        popUpTo("restaurant_list") { inclusive = true }
+                    }
+                }
+            )
+        }
+        
+        composable("order_history") {
+            OrderHistoryScreen(
+                navController = navController,
+                authViewModel = authViewModel
             )
         }
     }

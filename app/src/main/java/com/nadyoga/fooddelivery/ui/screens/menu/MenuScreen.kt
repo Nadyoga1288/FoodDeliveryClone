@@ -18,13 +18,13 @@ import java.util.Locale
 
 @Composable
 fun MenuScreen(
-    selectedType: RestaurantType,
+    restaurantType: RestaurantType,
     cartViewModel: CartViewModel,
     onBackClick: () -> Unit,
-    onViewCartClick: () -> Unit
+    onCartClick: () -> Unit
 ) {
     // Отримуємо список страв для обраного типу ресторану
-    val menuItems = MenuData.getMenuItems(selectedType)
+    val menuItems = MenuData.getMenuItems(restaurantType)
 
     // Дані з ViewModel для нижньої панелі
     val cartItems = cartViewModel.cartItems
@@ -41,7 +41,7 @@ fun MenuScreen(
                     color = MaterialTheme.colorScheme.surface
                 ) {
                     Button(
-                        onClick = onViewCartClick,
+                        onClick = onCartClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
@@ -87,7 +87,7 @@ fun MenuScreen(
 
             // Заголовок меню
             Text(
-                text = "Меню: ${selectedType.name}",
+                text = "Меню: ${restaurantType.name}",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.padding(vertical = 8.dp)
