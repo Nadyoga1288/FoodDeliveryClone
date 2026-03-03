@@ -1,4 +1,4 @@
-# 🍔 WoltFoodClone - Strong Junior Android Project
+# 🍔 WoltFoodClone - 
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.23-blue.svg)](https://kotlinlang.org)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-2024.04.00-green.svg)](https://developer.android.com/jetpack/compose)
